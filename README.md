@@ -2,12 +2,12 @@
 
 A voice-powered daily journal agent that runs entirely on your local machine. It calls you every evening, listens while you talk about your day, and writes a journal entry from the conversation.
 
-All AI processing is local via [Lemonade](https://github.com/onnx/turnkeyml/tree/main/lemonade): Whisper for speech-to-text, Kokoro for text-to-speech, and Qwen3.5 for conversation and journal summarization. Twilio handles only the phone bridge. No audio or transcripts leave your network.
+All AI processing is local via [Lemonade](https://lemonade-server.ai/): Whisper for speech-to-text, Kokoro for text-to-speech, and Qwen3.5 for conversation and journal summarization. Twilio handles only the phone bridge. No audio or transcripts leave your network.
 
 ## Prerequisites
 
 - **Node.js** 22+
-- **[Lemonade](https://github.com/onnx/turnkeyml/tree/main/lemonade)** running locally with these models loaded:
+- **[Lemonade](https://lemonade-server.ai/)** running locally with these models loaded:
   - `Whisper-Large-v3-Turbo` (STT)
   - `kokoro-v1` (TTS)
   - `Qwen3.5-4B-GGUF` (LLM)
