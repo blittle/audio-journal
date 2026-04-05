@@ -98,26 +98,34 @@ async function chatCompletion(
     headers["Authorization"] = `Bearer ${config.LLM_API_KEY}`;
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: config.LLM_MODEL,
-      messages,
-      max_tokens: 150,
-      chat_template_kwargs: { enable_thinking: false },
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`LLM request failed (${response.status}): ${body}`);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: config.LLM_MODEL,
+        messages,
+        max_tokens: 150,
+        chat_template_kwargs: { enable_thinking: false },
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`LLM request failed (${response.status}): ${body}`);
+    }
+
+    const data = (await response.json()) as {
+      choices: Array<{ message: { content: string } }>;
+    };
+    return data.choices[0].message.content;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await response.json()) as {
-    choices: Array<{ message: { content: string } }>;
-  };
-  return data.choices[0].message.content;
 }
 
 function sendAudio(ws: WebSocket, streamSid: string, mulawBuffer: Buffer): void {
@@ -456,11 +464,7 @@ function handleConnection(ws: WebSocket): void {
 
       case "stop": {
         console.log(`[${session?.userId ?? "unknown"}] CALL_END reason=twilio_stop`);
-        clearNoResponseTimer();
-        if (session) {
-          const s = removeSession(session.callSid);
-          if (s) endCall(s);
-        }
+        // Cleanup handled in the "close" handler which always fires after "stop"
         break;
       }
     }

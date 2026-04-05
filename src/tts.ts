@@ -6,20 +6,28 @@ import { config } from "./config.js";
 export async function synthesize(text: string): Promise<Buffer> {
   const url = `${config.LEMONADE_URL.replace(/\/$/, "")}/audio/speech`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: config.TTS_MODEL,
-      voice: config.TTS_VOICE,
-      input: text,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`TTS request failed (${response.status}): ${body}`);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: config.TTS_MODEL,
+        voice: config.TTS_VOICE,
+        input: text,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`TTS request failed (${response.status}): ${body}`);
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return Buffer.from(await response.arrayBuffer());
 }

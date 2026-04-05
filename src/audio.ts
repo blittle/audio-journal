@@ -18,13 +18,6 @@ export function mulawEncode(pcm: Int16Array): Buffer {
 }
 
 /**
- * Encode 16-bit PCM to base64 mulaw string (for sending back to Twilio).
- */
-export function toBase64Mulaw(pcm: Int16Array): string {
-  return mulawEncode(pcm).toString("base64");
-}
-
-/**
  * Calculate RMS energy of PCM samples. Used for voice activity detection.
  */
 export function calculateRMS(samples: Int16Array): number {

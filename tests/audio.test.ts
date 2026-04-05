@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   mulawDecode,
   mulawEncode,
-  toBase64Mulaw,
   calculateRMS,
   resample,
   pcmToWav,
@@ -34,16 +33,6 @@ describe("mulawEncode", () => {
     const encoded = mulawEncode(pcm);
     expect(encoded).toBeInstanceOf(Buffer);
     expect(encoded.length).toBe(pcm.length);
-  });
-});
-
-describe("toBase64Mulaw", () => {
-  it("returns a base64 string", () => {
-    const pcm = new Int16Array([100, 200, 300]);
-    const result = toBase64Mulaw(pcm);
-    expect(typeof result).toBe("string");
-    // Should be valid base64
-    expect(Buffer.from(result, "base64").length).toBe(pcm.length);
   });
 });
 
