@@ -15,7 +15,7 @@ const serverConfigSchema = z.object({
     .url()
     .default("http://127.0.0.1:8000/api/v1"),
 
-  STT_MODEL: z.string().default("Whisper-Large-v3-Turbo"),
+  STT_MODEL: z.string().default("Whisper-Large-v3"),
   TTS_MODEL: z.string().default("kokoro-v1"),
   TTS_VOICE: z.string().default("af_heart"),
   LLM_MODEL: z.string().default("Qwen3.5-4B-GGUF"),

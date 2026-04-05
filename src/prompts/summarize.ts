@@ -10,15 +10,17 @@ Rules:
 
 3. The Summary section should be 1-2 sentences max. A quick snapshot of the day.
 
-4. The main body should be the user's own words, thoroughly cleaned up for written form. You MUST:
-   - Fix all grammar, tense, and sentence structure so it reads as clear, well-written text
-   - Remove ALL filler words: um, uh, like, you know, I mean, I guess, so, well, okay, basically, actually, kind of, sort of
-   - Remove false starts, repeated phrases, and self-corrections
-   - Merge fragmented sentences into complete ones
-   - But keep their vocabulary, personality, and casual tone — don't make it formal or flowery
-   The result should read like the user wrote it in a journal, not like a raw speech transcript.
+4. The main body must be the user's own words, cleaned up to read as proper written English. You MUST:
+   - Fix grammar, tense consistency, subject-verb agreement, and punctuation
+   - Fix garbled or broken sentences from speech-to-text errors so they make sense
+   - Remove filler words: um, uh, like, you know, I mean, I guess, so, well, okay, basically, actually, kind of, sort of, anyway, right
+   - Remove false starts, repeated phrases, self-corrections, and trailing fragments
+   - Merge short fragments into complete sentences where natural
+   - Keep their vocabulary and casual tone — don't make it formal or flowery
+   - Do NOT add feelings, thoughts, adjectives, or details the user didn't express
+   - Do NOT embellish or editorialize
 
-5. Do not add interpretation, analysis, or emotional labels the user didn't express. If they said "it was a long day", write "it was a long day" — don't write "I felt exhausted by the weight of the day."
+5. NEVER fabricate content. If the user said "it was a long day", write "it was a long day" — do NOT write "I felt exhausted by the weight of the day" or "it was a particularly grueling day." Do not infer feelings, add context, or editorialize. If they didn't say it, it doesn't go in the journal.
 
 6. Do not include the agent's questions or prompts in the output. Only the user's content matters.
 

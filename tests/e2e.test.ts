@@ -229,11 +229,14 @@ describe("end-to-end call simulation", () => {
       // Verify opener was sent
       expect(received.filter((m) => m.event === "media").length).toBeGreaterThan(0);
 
-      // User speaks
+      // User speaks (turn 1)
       await speakAndWait(ws, "I had a really good day today. I went for a long walk in the park and the weather was beautiful.");
 
       // Verify assistant responded
       expect(received.filter((m) => m.event === "media").length).toBeGreaterThan(100);
+
+      // User speaks again (turn 2 — needed for journal generation)
+      await speakAndWait(ws, "That's about it for today. I'm done.");
 
       // End call
       sendStop(ws, callSid);
@@ -328,6 +331,31 @@ describe("end-to-end call simulation", () => {
   );
 
   it(
+    "voicemail greeting (single turn) does not generate a journal",
+    { timeout: 120_000 },
+    async () => {
+      const callSid = nextCallSid();
+      const { ws } = await connectCall(port, callSid);
+
+      // Simulate voicemail: only one "user" turn (the voicemail greeting)
+      await speakAndWait(ws,
+        "The wireless subscriber you are trying to reach is unavailable. Please leave a message after the tone."
+      );
+
+      // Call ends (voicemail hangs up or Twilio timeout)
+      sendStop(ws, callSid);
+      await new Promise((r) => setTimeout(r, 10000));
+
+      // Journal should NOT be generated — only 1 user turn
+      const files = journalFiles();
+      expect(files.length, "No journal should be created for voicemail greeting").toBe(0);
+
+      console.log("  ✓ Voicemail greeting did not generate a journal");
+      ws.close();
+    }
+  );
+
+  it(
     "multiple calls on same day append to the same journal file",
     { timeout: 180_000 },
     async () => {
@@ -336,6 +364,7 @@ describe("end-to-end call simulation", () => {
       const { ws: ws1 } = await connectCall(port, callSid1);
 
       await speakAndWait(ws1, "This morning I went to the grocery store and bought some apples.");
+      await speakAndWait(ws1, "That's all for now. I'm done.");
       sendStop(ws1, callSid1);
 
       const journalPath = await waitForFile(journalDir, ".md", 60_000);
@@ -349,6 +378,7 @@ describe("end-to-end call simulation", () => {
       const { ws: ws2 } = await connectCall(port, callSid2);
 
       await speakAndWait(ws2, "In the evening I watched a movie with my family. It was a comedy.");
+      await speakAndWait(ws2, "That's it. Goodbye.");
       sendStop(ws2, callSid2);
 
       // Wait for second journal to be appended

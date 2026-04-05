@@ -23,6 +23,7 @@ export class ConversationSession {
   private _promptedStillThere = false;
   private _isPlaying = false;
   private _skipJournal = false;
+  private _userTurnCount = 0;
 
   constructor(callSid: string, userId: string, systemPrompt: string) {
     this.callSid = callSid;
@@ -75,6 +76,11 @@ export class ConversationSession {
   addUserMessage(text: string): void {
     this.messages.push({ role: "user", content: text });
     this.transcriptParts.push(`User: ${text}`);
+    this._userTurnCount++;
+  }
+
+  get userTurnCount(): number {
+    return this._userTurnCount;
   }
 
   addAssistantMessage(text: string): void {

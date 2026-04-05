@@ -292,6 +292,12 @@ async function endCall(session: ConversationSession): Promise<void> {
     return;
   }
 
+  // Skip journal if user only had 1 turn — likely voicemail or no real conversation
+  if (session.userTurnCount <= 1) {
+    console.log(`[${session.userId}] Skipping journal (only ${session.userTurnCount} user turn(s) — likely voicemail or no conversation)`);
+    return;
+  }
+
   try {
     await generateJournal({
       userId: session.userId,
