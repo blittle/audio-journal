@@ -45,7 +45,21 @@ describe("SUMMARIZE_SYSTEM_PROMPT", () => {
   });
 
   it("includes the do not fabricate rule", () => {
-    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("Do not fabricate");
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("NEVER fabricate");
+  });
+
+  it("instructs not to delete sentences", () => {
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("Do NOT delete sentences");
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("Do NOT remove context");
+  });
+
+  it("instructs to handle verbal corrections", () => {
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("scratch that");
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("never mind");
+  });
+
+  it("instructs to convert spoken numbers", () => {
+    expect(SUMMARIZE_SYSTEM_PROMPT).toContain("spoken numbers, times, and dates");
   });
 });
 

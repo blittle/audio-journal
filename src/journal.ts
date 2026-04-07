@@ -157,7 +157,10 @@ export async function generateJournal(callData: CallData): Promise<string> {
 
   console.log(`Generating journal for ${callData.userId}...`);
   const systemPrompt = buildSummarizePrompt(config.KNOWN_NAMES);
-  const journalContent = await callLLM(systemPrompt, userPrompt);
+  const rawJournal = await callLLM(systemPrompt, userPrompt);
+
+  // Post-LLM name correction — catch any names the LLM reintroduced
+  const journalContent = applyNameCorrections(rawJournal);
 
   const dateStr = getDateStr(callData.callStartTime);
   return saveJournalFile(callData.userId, dateStr, journalContent);
@@ -193,7 +196,10 @@ export async function reprocessTranscript(userId: string, date: string): Promise
 
   console.log(`Reprocessing transcript for ${userId} on ${date} (${wordCount} words)...`);
   const systemPrompt = buildSummarizePrompt(config.KNOWN_NAMES);
-  const journalContent = await callLLM(systemPrompt, userPrompt);
+  const rawJournal = await callLLM(systemPrompt, userPrompt);
+
+  // Post-LLM name correction
+  const journalContent = applyNameCorrections(rawJournal);
 
   // Overwrite (not append) when reprocessing
   const journalDir = path.join(config.DATA_DIR, "journals", userId);
