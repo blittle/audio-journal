@@ -2,6 +2,7 @@ import http from "http";
 import { app } from "./server.js";
 import { attachMediaStreamHandler } from "./media-stream.js";
 import { startScheduler } from "./scheduler.js";
+import { cleanOldTranscripts } from "./journal.js";
 import { getAllUsers } from "./users.js";
 import { config } from "./config.js";
 
@@ -17,3 +18,4 @@ server.listen(config.PORT, () => {
 });
 
 startScheduler();
+cleanOldTranscripts();

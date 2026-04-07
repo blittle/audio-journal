@@ -30,6 +30,7 @@ const serverConfigSchema = z.object({
 
   API_KEY: z.string().optional(),
   KNOWN_NAMES: z.string().optional(),
+  TRANSCRIPT_RETENTION_DAYS: z.coerce.number().default(30),
 
   DATA_DIR: z.string().default("./data"),
   PORT: z.coerce.number().default(3000),

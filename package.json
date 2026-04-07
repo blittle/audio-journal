@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "reprocess": "tsx src/reprocess-cli.ts"
   },
   "keywords": [],
   "author": "",

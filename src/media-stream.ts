@@ -8,7 +8,7 @@ import { ConversationSession, setSession, removeSession } from "./session.js";
 import { mulawDecode, mulawEncode, calculateRMS, pcmToWav, decodeMp3 } from "./audio.js";
 import { transcribe } from "./stt.js";
 import { synthesize } from "./tts.js";
-import { generateJournal } from "./journal.js";
+import { generateJournal, saveTranscript } from "./journal.js";
 import { parseCallbackTime, scheduleRetry } from "./reschedule.js";
 
 const MULAW_SAMPLE_RATE = 8000;
@@ -293,26 +293,37 @@ async function processTurn(ws: WebSocket, session: ConversationSession): Promise
 
 async function endCall(session: ConversationSession): Promise<void> {
   const transcript = session.getTranscript();
-  if (!transcript || session.shouldSkipJournal) {
-    if (session.shouldSkipJournal) {
-      console.log(`[${session.userId}] Skipping journal (control phrase)`);
-    }
+  if (!transcript) return;
+
+  const callData = {
+    userId: session.userId,
+    transcript,
+    callStartTime: session.startedAt.toISOString(),
+    callDurationMinutes: session.getDurationMinutes(),
+  };
+
+  // Always save the raw transcript
+  try {
+    saveTranscript(callData);
+  } catch (err) {
+    console.error(`[${session.userId}] Failed to save transcript:`, err);
+  }
+
+  // Skip journal for control phrases
+  if (session.shouldSkipJournal) {
+    console.log(`[${session.userId}] Skipping journal (control phrase)`);
     return;
   }
 
-  // Skip journal if user only had 1 turn — likely voicemail or no real conversation
-  if (session.userTurnCount <= 1) {
-    console.log(`[${session.userId}] Skipping journal (only ${session.userTurnCount} user turn(s) — likely voicemail or no conversation)`);
+  // Skip journal if transcript is too short — likely voicemail or no real conversation
+  const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 30) {
+    console.log(`[${session.userId}] Skipping journal (only ${wordCount} words — likely voicemail or no conversation)`);
     return;
   }
 
   try {
-    await generateJournal({
-      userId: session.userId,
-      transcript,
-      callStartTime: session.startedAt.toISOString(),
-      callDurationMinutes: session.getDurationMinutes(),
-    });
+    await generateJournal(callData);
   } catch (err) {
     console.error(`[${session.userId}] Journal generation failed:`, err);
   }
