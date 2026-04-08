@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { config } from "./config.js";
 import { buildSystemPrompt as buildSummarizePrompt, buildUserPrompt, parseNameAliases, correctNames } from "./prompts/summarize.js";
+import { pcmToWav } from "./audio.js";
 
 interface CallData {
   userId: string;
@@ -63,7 +64,12 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
 }
 
 function getDateStr(callStartTime: string): string {
-  return new Date(callStartTime).toISOString().split("T")[0];
+  // Use local date components to avoid UTC offset shifting the date
+  const d = new Date(callStartTime);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -86,25 +92,53 @@ export function saveTranscript(callData: CallData): string {
 }
 
 /**
- * Clean up transcripts older than the retention period.
+ * Save raw call audio as WAV to data/audio/<userId>/YYYY-MM-DD-<timestamp>.wav
+ * Each call gets its own file so multiple calls on the same day are preserved.
+ */
+export function saveCallAudio(
+  userId: string,
+  callStartTime: string,
+  pcm: Int16Array,
+  sampleRate: number
+): string | null {
+  if (pcm.length === 0) return null;
+
+  const audioDir = path.join(config.DATA_DIR, "audio", userId);
+  fs.mkdirSync(audioDir, { recursive: true });
+
+  const dateStr = getDateStr(callStartTime);
+  const timestamp = Date.now();
+  const filePath = path.join(audioDir, `${dateStr}-${timestamp}.wav`);
+
+  const wav = pcmToWav(pcm, sampleRate);
+  fs.writeFileSync(filePath, wav);
+  console.log(`Audio saved: ${filePath} (${(wav.length / 1024).toFixed(0)} KB)`);
+  return filePath;
+}
+
+/**
+ * Clean up transcripts and audio older than the retention period.
  */
 export function cleanOldTranscripts(): void {
-  const transcriptsRoot = path.join(config.DATA_DIR, "transcripts");
-  if (!fs.existsSync(transcriptsRoot)) return;
-
   const cutoff = Date.now() - config.TRANSCRIPT_RETENTION_DAYS * 86_400_000;
 
-  for (const userId of fs.readdirSync(transcriptsRoot)) {
-    const userDir = path.join(transcriptsRoot, userId);
-    if (!fs.statSync(userDir).isDirectory()) continue;
+  for (const dir of ["transcripts", "audio"]) {
+    const root = path.join(config.DATA_DIR, dir);
+    if (!fs.existsSync(root)) continue;
 
-    for (const file of fs.readdirSync(userDir)) {
-      if (!file.endsWith(".txt")) continue;
-      const dateStr = file.replace(".txt", "");
-      const fileDate = new Date(dateStr).getTime();
-      if (fileDate < cutoff) {
-        fs.unlinkSync(path.join(userDir, file));
-        console.log(`Cleaned old transcript: ${userId}/${file}`);
+    for (const userId of fs.readdirSync(root)) {
+      const userDir = path.join(root, userId);
+      if (!fs.statSync(userDir).isDirectory()) continue;
+
+      for (const file of fs.readdirSync(userDir)) {
+        // Extract date from filename (YYYY-MM-DD.txt or YYYY-MM-DD-timestamp.wav)
+        const dateMatch = file.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        const fileDate = new Date(dateMatch[1]).getTime();
+        if (fileDate < cutoff) {
+          fs.unlinkSync(path.join(userDir, file));
+          console.log(`Cleaned old ${dir}: ${userId}/${file}`);
+        }
       }
     }
   }

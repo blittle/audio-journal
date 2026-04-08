@@ -8,7 +8,7 @@ import { ConversationSession, setSession, removeSession } from "./session.js";
 import { mulawDecode, mulawEncode, calculateRMS, pcmToWav, decodeMp3 } from "./audio.js";
 import { transcribe } from "./stt.js";
 import { synthesize } from "./tts.js";
-import { generateJournal, saveTranscript } from "./journal.js";
+import { generateJournal, saveTranscript, saveCallAudio } from "./journal.js";
 import { parseCallbackTime, scheduleRetry } from "./reschedule.js";
 
 const MULAW_SAMPLE_RATE = 8000;
@@ -302,11 +302,21 @@ async function endCall(session: ConversationSession): Promise<void> {
     callDurationMinutes: session.getDurationMinutes(),
   };
 
-  // Always save the raw transcript
+  // Always save the raw transcript and audio
   try {
     saveTranscript(callData);
   } catch (err) {
     console.error(`[${session.userId}] Failed to save transcript:`, err);
+  }
+  try {
+    saveCallAudio(
+      session.userId,
+      session.startedAt.toISOString(),
+      session.getFullCallAudio(),
+      MULAW_SAMPLE_RATE
+    );
+  } catch (err) {
+    console.error(`[${session.userId}] Failed to save audio:`, err);
   }
 
   // Skip journal for control phrases

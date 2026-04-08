@@ -3,3 +3,5 @@ dist/
 .env
 data/journals/
 data/users.json
+data/transcripts/
+data/audio/

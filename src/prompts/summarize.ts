@@ -48,7 +48,7 @@ Output format:
 
 ## What I Said
 
-[The user's words — ALL of them — edited for grammar and readability but preserving their voice. Organize chronologically or by topic as they spoke. Use paragraph breaks between distinct topics.]
+[The user's words — ALL of them — edited for grammar and readability but preserving their voice. You MUST insert paragraph breaks between distinct topics or when the subject changes. Each paragraph should cover one topic, event, or thought. A wall of text with no breaks is unacceptable.]
 
 ---
 

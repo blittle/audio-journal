@@ -15,6 +15,8 @@ export class ConversationSession {
   private transcriptParts: string[] = [];
   private audioChunks: Int16Array[] = [];
   private audioSampleCount = 0;
+  private fullCallAudio: Int16Array[] = [];
+  private fullCallSampleCount = 0;
   private silentMs = 0;
   private _isProcessing = false;
   private markCounter = 0;
@@ -35,6 +37,19 @@ export class ConversationSession {
   appendAudio(pcm: Int16Array): void {
     this.audioChunks.push(pcm);
     this.audioSampleCount += pcm.length;
+    this.fullCallAudio.push(pcm);
+    this.fullCallSampleCount += pcm.length;
+  }
+
+  getFullCallAudio(): Int16Array {
+    if (this.fullCallAudio.length === 0) return new Int16Array(0);
+    const result = new Int16Array(this.fullCallSampleCount);
+    let offset = 0;
+    for (const chunk of this.fullCallAudio) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
   }
 
   getBufferedAudio(): Int16Array {
