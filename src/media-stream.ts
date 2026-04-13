@@ -25,6 +25,22 @@ const NO_RESPONSE_TIMEOUT_MS = 30_000;
 const IDLE_PROMPT_MS = 20_000;
 const IDLE_HANGUP_MS = 25_000;
 
+// Voicemail detection — if the first user turn matches, hang up immediately
+const VOICEMAIL_PHRASES = [
+  "not available",
+  "leave a message",
+  "after the tone",
+  "after the beep",
+  "voicemail",
+  "record your message",
+  "mailbox is full",
+  "subscriber you have called",
+  "wireless subscriber",
+  "person you are trying to reach",
+  "not able to take your call",
+  "please try again later",
+];
+
 // Phrases that mean "don't call today at all"
 const SKIP_PHRASES = ["skip today", "not today", "skip tonight"];
 
@@ -245,9 +261,18 @@ async function processTurn(ws: WebSocket, session: ConversationSession): Promise
     session.resetIdle();
 
     console.log(`[${session.userId}] User: ${userText}`);
+
+    // 3. Voicemail detection — check before adding to messages
+    if (session.userTurnCount === 0 && matchesPhrase(userText, VOICEMAIL_PHRASES)) {
+      console.log(`[${session.userId}] CALL_END reason=voicemail detected="${userText.slice(0, 80)}"`);
+      session.markSkipJournal();
+      ws.close();
+      return;
+    }
+
     session.addUserMessage(userText);
 
-    // 3. Check for "skip today"
+    // 5. Check for "skip today"
     if (matchesPhrase(userText, SKIP_PHRASES)) {
       const reply = "Got it, no worries. I'll call again tomorrow.";
       console.log(`[${session.userId}] CALL_END reason=skip_phrase user_said="${userText}"`);
@@ -258,7 +283,7 @@ async function processTurn(ws: WebSocket, session: ConversationSession): Promise
       return;
     }
 
-    // 4. Check for callback phrases
+    // 6. Check for callback phrases
     if (matchesPhrase(userText, CALLBACK_PHRASES)) {
       console.log(`[${session.userId}] CALL_END reason=callback_phrase user_said="${userText}"`);
       session.markSkipJournal();
@@ -266,10 +291,10 @@ async function processTurn(ws: WebSocket, session: ConversationSession): Promise
       return;
     }
 
-    // 5. Check if user wants to wrap up
+    // 7. Check if user wants to wrap up
     const userWantsToEnd = matchesPhrase(userText, WRAP_UP_PHRASES);
 
-    // 6. LLM
+    // 8. LLM
     const assistantText = await chatCompletion(session.getMessages());
     console.log(`[${session.userId}] Assistant: ${assistantText}`);
     session.addAssistantMessage(assistantText);
